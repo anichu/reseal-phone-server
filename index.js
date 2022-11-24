@@ -46,11 +46,14 @@ async function run() {
 		app.get("/", async (req, res) => {
 			res.send("Server is running on port 🚀🚀🚀🚀");
 		});
-		app.get("/jwt", async (req, res) => {
+
+		app.get("/user/jwt", async (req, res) => {
 			const email = req.query.email;
+
 			const query = {
 				email: email,
 			};
+
 			const user = await usersCollection.findOne(query);
 			console.log("jwt", user);
 			let token;
