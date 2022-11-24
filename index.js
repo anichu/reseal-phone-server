@@ -43,6 +43,9 @@ async function run() {
 	try {
 		const phonesCollection = client.db("resealPhone").collection("phones");
 		const usersCollection = client.db("resealPhone").collection("users");
+		app.get("/", async (req, res) => {
+			res.send("Server is running on port 🚀🚀🚀🚀");
+		});
 		app.get("/jwt", async (req, res) => {
 			const email = req.query.email;
 			const query = {
@@ -59,6 +62,12 @@ async function run() {
 			}
 
 			res.status(403).send({ accessToken: token });
+		});
+
+		app.post("/users", async (req, res) => {
+			const user = req.body;
+			const result = await usersCollection.insertOne(user);
+			res.send(result);
 		});
 	} catch (err) {
 		console.log(err);
