@@ -123,6 +123,15 @@ async function run() {
 			const result = await phonesCollection.find(query).toArray();
 			res.send(result);
 		});
+		// delete my products
+		app.delete("/myproducts/:id", verifyJwt, verifySeller, async (req, res) => {
+			const id = req.params.id;
+			const query = {
+				_id: ObjectId(id),
+			};
+			const result = await phonesCollection.deleteOne(query);
+			res.send(result);
+		});
 	} catch (err) {
 		console.log(err);
 	}
