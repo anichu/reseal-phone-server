@@ -43,6 +43,23 @@ async function run() {
 	try {
 		const phonesCollection = client.db("resealPhone").collection("phones");
 		const usersCollection = client.db("resealPhone").collection("users");
+
+		async function verifySeller(req, res, next) {
+			const email = req.decoded.email;
+			const query = {
+				email,
+			};
+
+			const user = await usersCollection.findOne(query);
+			if (user?.role !== "seller") {
+				res.status(403).send({
+					message: "forbidden access",
+				});
+			}
+
+			next();
+		}
+
 		app.get("/", async (req, res) => {
 			res.send("Server is running on port 🚀🚀🚀🚀");
 		});
@@ -92,6 +109,18 @@ async function run() {
 				isAdvertised: false,
 			};
 			const result = await phonesCollection.insertOne(currentProduct);
+			res.send(result);
+		});
+		// get my products
+		app.get("/myproducts", verifyJwt, verifySeller, async (req, res) => {
+			const authorization = req.headers.authorization;
+
+			console.log(authorization);
+			const email = req?.decoded?.email;
+			const query = {
+				email: email,
+			};
+			const result = await phonesCollection.find(query).toArray();
 			res.send(result);
 		});
 	} catch (err) {
