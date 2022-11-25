@@ -66,18 +66,32 @@ async function run() {
 
 			res.status(403).send({ accessToken: token });
 		});
-
+		// create user
 		app.post("/users", async (req, res) => {
 			const user = req.body;
 			const result = await usersCollection.insertOne(user);
 			res.send(result);
 		});
+		// get user by query email
 		app.get("/user", async (req, res) => {
 			const email = req.query.email;
 			const query = {
 				email,
 			};
 			const result = await usersCollection.findOne(query);
+			res.send(result);
+		});
+
+		// create products
+		app.post("/products", async (req, res) => {
+			const data = req.body;
+			const currentProduct = {
+				...data,
+				isAvailable: true,
+				createdDate: new Date(),
+				isAdvertised: false,
+			};
+			const result = await phonesCollection.insertOne(currentProduct);
 			res.send(result);
 		});
 	} catch (err) {
