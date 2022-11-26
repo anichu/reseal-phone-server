@@ -170,6 +170,34 @@ async function run() {
 				res.send(product);
 			}
 		);
+		// get advertised products
+		app.get("/products/advertised", async (req, res) => {
+			const query = {
+				isAvailable: true,
+				isAdvertised: true,
+			};
+			const result = await phonesCollection.find(query).toArray();
+			res.send(result);
+		});
+
+		// app.get("/users/verified", async (req, res) => {
+		// 	const filter = {};
+		// 	const options = {
+		// 		upsert: true,
+		// 	};
+		// 	const updateDoc = {
+		// 		$set: {
+		// 			isVerified: false,
+		// 		},
+		// 	};
+		// 	try {
+		// 		const result = await usersCollection.updateMany(filter, updateDoc);
+		// 		console.log(result);
+		// 		res.send(result);
+		// 	} catch (err) {
+		// 		console.log(err);
+		// 	}
+		// });
 	} catch (err) {
 		console.log(err);
 	}
