@@ -140,6 +140,36 @@ async function run() {
 			const result = await categoriesCollection.find({}).toArray();
 			res.send(result);
 		});
+
+		// advertised products
+		app.get(
+			"/myproducts/advertised/:id",
+			verifyJwt,
+			verifySeller,
+			async (req, res) => {
+				const id = req.params.id;
+				const filter = {
+					_id: ObjectId(id),
+				};
+				const options = {
+					upsert: true,
+				};
+
+				const updateDoc = {
+					$set: {
+						isAdvertised: true,
+					},
+				};
+
+				const product = await phonesCollection.updateOne(
+					filter,
+					updateDoc,
+					options
+				);
+
+				res.send(product);
+			}
+		);
 	} catch (err) {
 		console.log(err);
 	}
