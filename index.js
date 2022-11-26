@@ -196,12 +196,21 @@ async function run() {
 			const result = await phonesCollection.find(query).toArray();
 			res.send(result);
 		});
-
+		// get all buyers
 		app.get("/allbuyers", verifyJwt, verifyAdmin, async (req, res) => {
 			const query = {
 				role: "buyer",
 			};
 			const result = await usersCollection.find(query).toArray();
+			res.send(result);
+		});
+		// buyer delete
+		app.delete("/user/buyer/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = {
+				_id: ObjectId(id),
+			};
+			const result = await usersCollection.deleteOne(query);
 			res.send(result);
 		});
 
@@ -210,6 +219,30 @@ async function run() {
 				role: "seller",
 			};
 			const result = await usersCollection.find(query);
+			res.send(result);
+		});
+		// create user when login with google
+		app.post("/users/google", async (req, res) => {
+			const data = req.body;
+			const query = {
+				email: data.email,
+			};
+
+			const user = await usersCollection.findOne(query);
+			let result;
+			if (!user) {
+				result = await usersCollection.insertOne(data);
+			} else {
+				const updateDoc = {
+					$set: {
+						...data,
+					},
+				};
+				const options = {
+					upsert: true,
+				};
+				result = await usersCollection.updateOne(query, updateDoc, options);
+			}
 			res.send(result);
 		});
 
