@@ -43,6 +43,9 @@ async function run() {
 	try {
 		const phonesCollection = client.db("resealPhone").collection("phones");
 		const usersCollection = client.db("resealPhone").collection("users");
+		const categoriesCollection = client
+			.db("resealPhone")
+			.collection("categories");
 
 		async function verifySeller(req, res, next) {
 			const email = req.decoded.email;
@@ -100,7 +103,7 @@ async function run() {
 		});
 
 		// create products
-		app.post("/products", async (req, res) => {
+		app.post("/products", verifyJwt, verifySeller, async (req, res) => {
 			const data = req.body;
 			const currentProduct = {
 				...data,
@@ -130,6 +133,11 @@ async function run() {
 				_id: ObjectId(id),
 			};
 			const result = await phonesCollection.deleteOne(query);
+			res.send(result);
+		});
+		// get categories
+		app.get("/categories", async (req, res) => {
+			const result = await categoriesCollection.find({}).toArray();
 			res.send(result);
 		});
 	} catch (err) {
