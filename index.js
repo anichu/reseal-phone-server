@@ -31,8 +31,9 @@ function verifyJwt(req, res, next) {
 
 	const token = authHeader.split(" ")[1];
 	jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+		console.log(err);
 		if (err) {
-			res.status(403).send({ message: "Forbidden access" });
+			return res.status(403).send({ message: "Forbidden access" });
 		}
 		req.decoded = decoded;
 		next();
@@ -55,7 +56,23 @@ async function run() {
 
 			const user = await usersCollection.findOne(query);
 			if (user?.role !== "seller") {
-				res.status(403).send({
+				return res.status(403).send({
+					message: "forbidden access",
+				});
+			}
+
+			next();
+		}
+
+		async function verifyAdmin(req, res, next) {
+			const email = req.decoded.email;
+			console.log(email);
+			const query = {
+				email,
+			};
+			const user = await usersCollection.findOne(query);
+			if (user?.role !== "admin") {
+				return res.status(403).send({
 					message: "forbidden access",
 				});
 			}
@@ -177,6 +194,22 @@ async function run() {
 				isAdvertised: true,
 			};
 			const result = await phonesCollection.find(query).toArray();
+			res.send(result);
+		});
+
+		app.get("/allbuyers", verifyJwt, verifyAdmin, async (req, res) => {
+			const query = {
+				role: "buyer",
+			};
+			const result = await usersCollection.find(query).toArray();
+			res.send(result);
+		});
+
+		app.get("/allsellers", verifyJwt, verifyAdmin, async (req, res) => {
+			const query = {
+				role: "seller",
+			};
+			const result = await usersCollection.find(query);
 			res.send(result);
 		});
 
