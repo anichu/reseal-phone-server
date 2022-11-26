@@ -245,7 +245,15 @@ async function run() {
 			}
 			res.send(result);
 		});
-
+		// get products by categories
+		app.get("/products/:category", async (req, res) => {
+			const category = req.params.category;
+			const query = {
+				category: category,
+			};
+			const products = await phonesCollection.find(query).toArray();
+			res.send(products);
+		});
 		// app.get("/users/verified", async (req, res) => {
 		// 	const filter = {};
 		// 	const options = {
