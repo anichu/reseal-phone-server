@@ -314,6 +314,19 @@ async function run() {
 			const result = await bookingCollection.insertOne(currentBooking);
 			res.send(result);
 		});
+		app.get("/user/buyer/bookings", verifyJwt, async (req, res) => {
+			const email = req?.query?.email;
+
+			if (email !== req.decoded.email) {
+				return res.status(403).send({ message: "access forbidden" });
+			}
+
+			const query = {
+				email,
+			};
+			const result = await bookingCollection.find(query).toArray();
+			res.send(result);
+		});
 
 		// app.get("/users/verified", async (req, res) => {
 		// 	const filter = {};
