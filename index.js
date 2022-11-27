@@ -47,6 +47,7 @@ async function run() {
 		const categoriesCollection = client
 			.db("resealPhone")
 			.collection("categories");
+		const bookingCollection = client.db("resealPhone").collection("bookings");
 
 		async function verifySeller(req, res, next) {
 			const email = req.decoded.email;
@@ -141,6 +142,15 @@ async function run() {
 				email: email,
 			};
 			const result = await phonesCollection.find(query).toArray();
+			res.send(result);
+		});
+		// get products by id
+		app.get("/products/book/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = {
+				_id: ObjectId(id),
+			};
+			const result = await phonesCollection.findOne(query);
 			res.send(result);
 		});
 		// delete my products
@@ -254,32 +264,38 @@ async function run() {
 			const products = await phonesCollection.find(query).toArray();
 			res.send(products);
 		});
-		// verify api
-		app.put("/user/seller/verify/:id", async (req, res) => {
-			const id = req.params.id;
-			const filter = {
-				_id: ObjectId(id),
-			};
-			const updatedDoc = {
-				$set: {
-					isVerified: true,
-				},
-			};
-			const options = {
-				upsert: true,
-			};
 
-			const result = await usersCollection.updateOne(
-				filter,
-				updatedDoc,
-				options
-			);
-			console.log(result);
-			res.send(result);
-		});
+		// verify api
+		app.put(
+			"/user/seller/verify/:id",
+			verifyJwt,
+			verifyAdmin,
+			async (req, res) => {
+				const id = req.params.id;
+				const filter = {
+					_id: ObjectId(id),
+				};
+				const updatedDoc = {
+					$set: {
+						isVerified: true,
+					},
+				};
+				const options = {
+					upsert: true,
+				};
+
+				const result = await usersCollection.updateOne(
+					filter,
+					updatedDoc,
+					options
+				);
+				console.log(result);
+				res.send(result);
+			}
+		);
 
 		// delete seller
-		app.delete("/user/seller/:id", async (req, res) => {
+		app.delete("/user/seller/:id", verifyJwt, verifyAdmin, async (req, res) => {
 			const id = req.params.id;
 			const query = {
 				_id: ObjectId(id),
@@ -287,6 +303,18 @@ async function run() {
 			const result = await usersCollection.deleteOne(query);
 			res.send(result);
 		});
+
+		app.post("/booking", async (req, res) => {
+			const data = req.body;
+			const currentBooking = {
+				...data,
+				created: new Date(),
+				isPaid: false,
+			};
+			const result = await bookingCollection.insertOne(currentBooking);
+			res.send(result);
+		});
+
 		// app.get("/users/verified", async (req, res) => {
 		// 	const filter = {};
 		// 	const options = {
