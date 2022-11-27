@@ -218,7 +218,7 @@ async function run() {
 			const query = {
 				role: "seller",
 			};
-			const result = await usersCollection.find(query);
+			const result = await usersCollection.find(query).toArray();
 			res.send(result);
 		});
 		// create user when login with google
@@ -253,6 +253,29 @@ async function run() {
 			};
 			const products = await phonesCollection.find(query).toArray();
 			res.send(products);
+		});
+		// verify api
+		app.put("/user/seller/verify/:id", async (req, res) => {
+			const id = req.params.id;
+			const filter = {
+				_id: ObjectId(id),
+			};
+			const updatedDoc = {
+				$set: {
+					isVerified: true,
+				},
+			};
+			const options = {
+				upsert: true,
+			};
+
+			const result = await usersCollection.updateOne(
+				filter,
+				updatedDoc,
+				options
+			);
+			console.log(result);
+			res.send(result);
 		});
 		// app.get("/users/verified", async (req, res) => {
 		// 	const filter = {};
