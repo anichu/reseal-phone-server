@@ -5,6 +5,7 @@ const cors = require("cors");
 const app = express();
 const morgan = require("morgan");
 const jwt = require("jsonwebtoken");
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -48,6 +49,7 @@ async function run() {
 			.db("resealPhone")
 			.collection("categories");
 		const bookingCollection = client.db("resealPhone").collection("bookings");
+		const paymentCollection = client.db("resealPhone").collection("payments");
 
 		async function verifySeller(req, res, next) {
 			const email = req.decoded.email;
@@ -260,6 +262,7 @@ async function run() {
 			const category = req.params.category;
 			const query = {
 				category: category,
+				isAvailable: true,
 			};
 			const products = await phonesCollection.find(query).toArray();
 			res.send(products);
@@ -321,6 +324,10 @@ async function run() {
 				return res.status(403).send({ message: "access forbidden" });
 			}
 
+			// const paymentPhoneId = await paymentCollection
+			// 	.find({})
+			// 	.project({ phoneId: 1 });
+
 			const query = {
 				email,
 			};
@@ -328,6 +335,87 @@ async function run() {
 			res.send(result);
 		});
 
+		app.get("/user/buyer/bookings/:id", async (req, res) => {
+			const id = req.params.id.trim();
+			const query = {
+				_id: ObjectId(id),
+			};
+			const result = await bookingCollection.findOne(query);
+			res.send(result);
+		});
+
+		app.post("/create-payment-intent", async (req, res) => {
+			const booking = req.body;
+			const price = booking.price;
+			const amount = price * 100;
+
+			const paymentIntent = await stripe.paymentIntents.create({
+				currency: "usd",
+				amount: amount,
+				payment_method_types: ["card"],
+			});
+			res.send({
+				clientSecret: paymentIntent.client_secret,
+			});
+		});
+
+		app.post("/payments", async (req, res) => {
+			const data = req.body;
+			const { email, transactionId, productId, booking } = data;
+			const currentPayment = {
+				transactionId,
+				booking,
+				email,
+				productId,
+			};
+			console.log(data);
+			const paymentResult = await paymentCollection.insertOne(currentPayment);
+			if (paymentResult.acknowledged) {
+				const filterBooking = {
+					_id: ObjectId(booking),
+				};
+				const filterPhones = {
+					_id: ObjectId(productId),
+				};
+				const options = {
+					upsert: true,
+				};
+				const updateBooking = {
+					$set: {
+						isPaid: true,
+					},
+				};
+
+				const updatePhones = {
+					$set: {
+						isAvailable: false,
+					},
+				};
+
+				const bookingResult = await bookingCollection.updateOne(
+					filterBooking,
+					updateBooking,
+					options
+				);
+				const phoneResult = await phonesCollection.updateOne(
+					filterPhones,
+					updatePhones,
+					options
+				);
+				console.log(phoneResult);
+			}
+
+			res.send(paymentResult);
+		});
+		// whether product is sold  or not
+		app.get("/payments/:id", async (req, res) => {
+			const productId = req.params.id;
+			const query = {
+				productId,
+			};
+			const result = await paymentCollection.findOne(query);
+			res.send(result);
+		});
 		// app.get("/users/verified", async (req, res) => {
 		// 	const filter = {};
 		// 	const options = {
