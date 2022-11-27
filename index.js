@@ -26,6 +26,7 @@ const client = new MongoClient(uri, {
 
 function verifyJwt(req, res, next) {
 	const authHeader = req.headers.authorization;
+
 	if (!authHeader) {
 		return res.status(401).send({ message: "Unauthorized access" });
 	}
@@ -266,6 +267,21 @@ async function run() {
 			};
 			const products = await phonesCollection.find(query).toArray();
 			res.send(products);
+		});
+
+		app.get("/latestproducts", async (req, res) => {
+			const query = {
+				isAvailable: true,
+				isAdvertised: false,
+			};
+
+			const result = await phonesCollection
+				.find(query)
+				.limit(6)
+				.sort({ createdDate: -1 })
+				.toArray();
+
+			res.send(result);
 		});
 
 		// verify api
