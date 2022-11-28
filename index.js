@@ -51,6 +51,7 @@ async function run() {
 			.collection("categories");
 		const bookingCollection = client.db("resealPhone").collection("bookings");
 		const paymentCollection = client.db("resealPhone").collection("payments");
+		const wishListCollection = client.db("resealPhone").collection("wishLists");
 
 		async function verifySeller(req, res, next) {
 			const email = req.decoded.email;
@@ -144,7 +145,10 @@ async function run() {
 			const query = {
 				email: email,
 			};
-			const result = await phonesCollection.find(query).toArray();
+			const result = await phonesCollection
+				.find(query)
+				.sort({ createdDate: -1 })
+				.toArray();
 			res.send(result);
 		});
 		// get products by id
@@ -265,7 +269,10 @@ async function run() {
 				category: category,
 				isAvailable: true,
 			};
-			const products = await phonesCollection.find(query).toArray();
+			const products = await phonesCollection
+				.find(query)
+				.sort({ createdDate: -1 })
+				.toArray();
 			res.send(products);
 		});
 
@@ -347,7 +354,10 @@ async function run() {
 			const query = {
 				email,
 			};
-			const result = await bookingCollection.find(query).toArray();
+			const result = await bookingCollection
+				.find(query)
+				.sort({ created: -1 })
+				.toArray();
 			res.send(result);
 		});
 
@@ -430,6 +440,29 @@ async function run() {
 				productId,
 			};
 			const result = await paymentCollection.findOne(query);
+			res.send(result);
+		});
+
+		app.post("/mywishlist", async (req, res) => {
+			const data = req.body;
+			const currentWishList = {
+				...data,
+				created: new Date(),
+			};
+			const result = await wishListCollection.insertOne(currentWishList);
+			res.send(result);
+		});
+
+		app.get("/user/mywishlist", verifyJwt, async (req, res) => {
+			const email = req?.decoded?.email;
+			console.log("wish", email);
+			const query = {
+				email,
+			};
+			const result = await wishListCollection
+				.find(query)
+				.sort({ created: -1 })
+				.toArray();
 			res.send(result);
 		});
 		// app.get("/users/verified", async (req, res) => {
