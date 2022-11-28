@@ -448,8 +448,31 @@ async function run() {
 			const currentWishList = {
 				...data,
 				created: new Date(),
+				isBooked: false,
 			};
 			const result = await wishListCollection.insertOne(currentWishList);
+			res.send(result);
+		});
+
+		app.get("/mywishlist/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = {
+				_id: ObjectId(id),
+			};
+			const updateDoc = {
+				$set: {
+					isBooked: true,
+				},
+			};
+
+			const options = {
+				upsert: true,
+			};
+			const result = await wishListCollection.updateOne(
+				query,
+				updateDoc,
+				options
+			);
 			res.send(result);
 		});
 
@@ -458,6 +481,7 @@ async function run() {
 			console.log("wish", email);
 			const query = {
 				email,
+				isBooked: false,
 			};
 			const result = await wishListCollection
 				.find(query)
